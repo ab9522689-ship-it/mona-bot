@@ -7,7 +7,8 @@ app.use(express.json());
 const TOKEN = process.env.BOT_TOKEN;
 const TELEGRAM_API = `https://api.telegram.org/bot${TOKEN}`;
 const URI = `/webhook/${TOKEN}`;
-const WEBHOOK_URL = `https://mona-bot.onrender.com${URI}`;
+const WEBHOOK_URL = 
+`https://mona-bot.onrender.com${URI}`;
 
 // Telegram webhook set
 app.post(URI, async (req, res) => {
