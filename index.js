@@ -1,27 +1,40 @@
 import express from "express";
-import dotenv from "dotenv";
-
-dotenv.config();
+import axios from "axios";
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+app.use(express.json());
 
-// Free Feature
-app.get("/", (req, res) => {
-  res.send("👋 Welcome to Mona Bot! Use /premium to unlock special features.");
+const TOKEN = process.env.BOT_TOKEN;
+const TELEGRAM_API = `https://api.telegram.org/bot${TOKEN}`;
+const URI = `/webhook/${TOKEN}`;
+const WEBHOOK_URL = `https://mona-bot.onrender.com${URI}`;
+
+// Telegram webhook set
+app.post(URI, async (req, res) => {
+  const chatId = req.body.message.chat.id;
+  const text = req.body.message.text;
+
+  console.log("Message received:", text);
+
+  let reply = "Hi 😊 I’m Mona! How are you?";
+  if (/hello|hi/i.test(text)) reply = "Hello ❤️ Mona yahan hai, kaise ho?";
+  else if (/kya kar rahi ho/i.test(text)) reply = "Bas aapse baat kar rahi ho 💬";
+  else if (/bye/i.test(text)) reply = "Bye bye 👋 fir milte hai!";
+  else reply = "Hmm... ye interesting hai 😄 aur batao?";
+
+  await axios.post(`${TELEGRAM_API}/sendMessage`, {
+    chat_id: chatId,
+    text: reply,
+  });
+
+  return res.send();
 });
 
-// Premium Feature (unlocks with coins)
-app.get("/premium", (req, res) => {
-  const coins = 10;
-  res.send(`🌟 Premium unlocked with ${coins} coins! Now you can view Riya's photos & videos!`);
-});
+// Home route
+app.get("/", (req, res) => res.send("Mona Bot is live 💖"));
 
-// Watch Ad to Earn Coins
-app.get("/watch-ad", (req, res) => {
-  res.send("🎥 Thanks for watching the ad! You earned 0.50 coins!");
-});
-
-app.listen(PORT, () => {
-  console.log(`🚀 Mona Bot running on port ${PORT}`);
+// Start server
+const PORT = process.env.PORT || 10000;
+app.listen(PORT, async () => {
+  console.log(`Mona running on port ${PORT}`);
 });
