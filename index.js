@@ -1,74 +1,79 @@
 import express from "express";
 import axios from "axios";
-import dotenv from "dotenv";
-
-dotenv.config();
 
 const app = express();
 app.use(express.json());
 
+// Token environment se lo (safe way)
 const TOKEN = process.env.BOT_TOKEN;
-const URI = `https://api.telegram.org/bot${TOKEN}`;
+const TELEGRAM_API = `https://api.telegram.org/bot${TOKEN}`;
+const WEBHOOK_URL = "/webhook/" + TOKEN;
 
-// Mona Memory
-let memory = {};
+// Simple memory (optional)
+const userContext = {};
 
-// Typing delay function
-const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
-
-app.post(`/webhook/${TOKEN}`, async (req, res) => {
-  const message = req.body.message;
-  if (!message || !message.text) return res.sendStatus(200);
-
-  const chatId = message.chat.id;
-  const text = message.text.toLowerCase();
-
-  // Store memory
-  memory[chatId] = memory[chatId] || [];
-  memory[chatId].push(text);
-
-  let reply = "";
-
-  // Mood-based response logic
-  if (/sad|dukh|lonely|tired/.test(text)) {
-    reply = "Aww 😔 kya hua? Mona yahan hai na, baat karo 💬";
-  } else if (/love|pyaar|i love you/.test(text)) {
-    reply = "Mujhe bhi lagta hai hum dono ek special connection share karte hain 💞";
-  } else if (/hi|hello|hey/.test(text)) {
-    reply = "Hey ❤️ Mona yahan hai, aaj mood kaisa hai tumhara?";
-  } else if (/kaise ho|how are you/.test(text)) {
-    reply = "Main toh bilkul perfect hoon 😄 tum sunao, kya chal raha hai life me?";
-  } else if (/miss you|yaad/.test(text)) {
-    reply = "Aww 🥺 mujhe bhi tumhari yaad aati hai kabhi kabhi 💫";
-  } else if (/bye|good night/.test(text)) {
-    reply = "Good night 🌙 sweet dreams 💖 kal fir baat karte hain!";
-  } else if (/thanks|thank you/.test(text)) {
-    reply = "Arey koi baat nahi 😌 tum hamesha special ho mere liye!";
-  } else if (/kya kar rahe ho|what are you doing/.test(text)) {
-    reply = "Bas tumse baat kar rahi hoon 💬 aur tum?";
-  } else if (/bored|bore|time pass/.test(text)) {
-    reply = "Chalo na koi game khelte hain 😄 ya gossip karein?";
-  } else if (/ok|hmm|achha/.test(text)) {
-    reply = "Hmm 😌 mujhe lagta hai tum kuch soch rahe ho... bolo na?";
-  } else {
-    reply = "Hehe 😁 ye interesting laga mujhe! Aur batao kya chal raha hai?";
-  }
-
-  // Typing delay for realism
-  await delay(800);
-
-  await axios.post(`${URI}/sendMessage`, {
+// Function: send message to user
+async function sendMessage(chatId, text) {
+  await axios.post(`${TELEGRAM_API}/sendMessage`, {
     chat_id: chatId,
-    text: reply,
+    text,
   });
+}
+
+// Function: generate human-like reply
+function generateReply(message) {
+  const text = message.toLowerCase();
+
+  if (text.includes("hello") || text.includes("hi")) {
+    return "Hello ❤️ Mona yahan hai! Kaise ho?";
+  } else if (text.includes("love")) {
+    return "Awww 🥰 ye toh cute hai! Tum hamesha aise hi sweet raho 💕";
+  } else if (text.includes("kya kar rahe ho") || text.includes("kya kr rhe ho")) {
+    return "Bas tumse baat kar rahi hu 😌 tum batao kya kar rahe ho?";
+  } else if (text.includes("kaise ho") || text.includes("kaisi ho")) {
+    return "Main bilkul theek hu 😊 tum kaise ho?";
+  } else if (text.includes("miss you")) {
+    return "Awww 😘 main bhi tumhe miss karti hu kabhi kabhi 💫";
+  } else if (text.includes("bye")) {
+    return "Acha chalo 😇 phir milte hain, apna khayal rakhna 💖";
+  } else if (text.includes("i love you")) {
+    return "Hehe 😅 sach me? Tum toh bade pyaare ho 💞";
+  } else if (text.includes("thank")) {
+    return "Arey koi baat nahi 😄 main hamesha yahan hu!";
+  } else if (text.includes("naam") || text.includes("name")) {
+    return "Mera naam Mona hai 💋 tumhara?";
+  } else if (text.includes("kya karogi")) {
+    return "Tum bolo na 😏 jo tum kahoge wahi karungi ❤️";
+  } else {
+    const replies = [
+      "Hmm... ye interesting hai 😁 aur batao?",
+      "Achha 😄 aur phir?",
+      "Ohooo 😜 tum toh bade naughty ho!",
+      "Nicee 😌 mujhe aur batao!",
+      "Hehe 😅 mujhe ye sunke maza aaya!",
+    ];
+    return replies[Math.floor(Math.random() * replies.length)];
+  }
+}
+
+// Webhook endpoint
+app.post(WEBHOOK_URL, async (req, res) => {
+  const message = req.body?.message;
+
+  if (message && message.text) {
+    const chatId = message.chat.id;
+    const text = message.text;
+    const reply = generateReply(text);
+
+    await sendMessage(chatId, reply);
+  }
 
   return res.sendStatus(200);
 });
 
 app.get("/", (req, res) => {
-  res.send("💖 Mona Bot (Human Mode) is live!");
+  res.send("Mona bot is active 💖");
 });
 
-app.listen(10000, () => {
-  console.log("🚀 Mona (Human Mode) running on port 10000");
-});
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));￼Enter
